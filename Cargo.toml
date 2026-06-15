@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "redstone-core",
+    "redstone-app"
+]
+resolver = "2"
