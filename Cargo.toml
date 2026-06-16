@@ -1,6 +1,7 @@
 [workspace]
 members = [
+    "redstone-app",
     "redstone-core",
-    "redstone-app"
+    "redstone-cli"
 ]
 resolver = "2"
