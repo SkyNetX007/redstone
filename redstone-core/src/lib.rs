@@ -1,14 +1,11 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+// redstone-core/src/lib.rs
+pub mod config;
+pub mod ipc;
+pub mod profile;
+pub mod slp;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+rust_i18n::i18n!("../redstone-i18n/locales", fallback = "en");
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub fn init_locale(locale: &str) {
+    rust_i18n::set_locale(locale);
 }
