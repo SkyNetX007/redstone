@@ -1,0 +1,9 @@
+# locales/en-US.yaml
+app:
+    about: "Redstone Control"
+    desktop:
+        start: "⚙️ [App] start desktop app"
+    tui:
+        start: "⚙️ [App] start TUI"
+    web:
+        start: "⚙️ [App] start WEB"

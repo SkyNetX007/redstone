@@ -1,0 +1,9 @@
+# locales/zh-CN.yaml
+app:
+    about: "Redstone 管理器"
+    desktop:
+        start: "⚙️ [App] 启动桌面应用"
+    tui:
+        start: "⚙️ [App] 启动 TUI"
+    web:
+        start: "⚙️ [App] 启动 WEB"
