@@ -1,13 +1,13 @@
 [package]
 name = "redstone-app"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 redstone-cli = { path = "../redstone-cli" }
-rust-i18n = "4.1.0"
-sys-locale = "0.3.2"
-tokio = { version = "1.52.3", features = ["full"] }
+rust-i18n.workspace = true
+sys-locale.workspace = true
+tokio.workspace = true
 
 [[bin]]
 name = "redstone"

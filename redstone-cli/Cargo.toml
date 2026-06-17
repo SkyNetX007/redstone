@@ -1,17 +1,17 @@
 [package]
 name = "redstone-cli"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-clap = { version = "4.6.1", features = ["derive", "unicode"] }
-clap_complete = "4.5.37"
-crossterm = "0.29.0"
-serde_yaml = "0.9.34"
-interprocess = "2.4.2"
+clap.workspace = true
+clap_complete.workspace = true
+crossterm.workspace = true
+serde_yaml.workspace = true
+interprocess.workspace = true
 redstone-core = { path = "../redstone-core" }
-rust-i18n = "4.1.0"
-tokio = { version = "1.52.3", features = ["full"] }
+rust-i18n.workspace = true
+tokio.workspace = true
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.186"
+libc.workspace = true

@@ -5,3 +5,25 @@ members = [
     "redstone-cli"
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["SkyNetX007"]
+description = "A cross-platform Minecraft server control program."
+repository = "https://github.com/SkyNetX007/redstone"
+
+[workspace.dependencies]
+clap = { version = "4.6.1", features = ["derive", "unicode"] }
+clap_complete = "4.5.37"
+crossterm = "0.29.0"
+dirs = "6.0.0"
+interprocess = { version = "2.4.2", features = ["tokio"] }
+libc = "0.2.186"
+rust-i18n = "4.1.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+serde_yaml = "0.9.34"
+sys-locale = "0.3.2"
+tokio = { version = "1.52.3", features = ["full"] }
