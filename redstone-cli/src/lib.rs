@@ -9,7 +9,7 @@ rust_i18n::i18n!("../redstone-i18n/locales", fallback = "en");
 mod cmd;
 
 #[derive(Parser)]
-#[command(name = "redstone")]
+#[command(name = "redstone", version)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -64,6 +64,13 @@ enum Commands {
         profile: String,
         #[arg(long, short, help = "Force remove even if running")]
         force: bool,
+    },
+    #[command(about = "Rename a profile")]
+    Rename {
+        #[arg(help = "Current profile name")]
+        from: String,
+        #[arg(help = "New profile name")]
+        to: String,
     },
     #[command(about = "Follow server log")]
     Log {
@@ -133,6 +140,7 @@ pub async fn run_cli() {
         .mut_subcommand("attach", |s| s.about(t!("app.cli.attach_desc")))
         .mut_subcommand("list", |s| s.about(t!("app.cli.list_desc")))
         .mut_subcommand("rm", |s| s.about(t!("app.cli.rm_desc")))
+        .mut_subcommand("rename", |s| s.about(t!("app.cli.rename_desc")))
         .mut_subcommand("log", |s| s.about(t!("app.cli.log_desc")))
         .mut_subcommand("completion", |s| s.about(t!("app.cli.completion_desc")))
         .mut_subcommand("init", |s| s.about(t!("app.cli.init_desc")))
@@ -155,6 +163,7 @@ pub async fn run_cli() {
         Some(Commands::Attach { profile }) => cmd::attach_cmd(&profile).await,
         Some(Commands::List { online, offline }) => cmd::list_cmd(online, offline).await,
         Some(Commands::Rm { profile, force }) => cmd::rm_cmd(&profile, force).await,
+        Some(Commands::Rename { from, to }) => cmd::rename_cmd(&from, &to).await,
         Some(Commands::Log { profile, follow }) => cmd::log_cmd(&profile, follow).await,
         Some(Commands::Completion { shell }) => cmd::completion_cmd(shell),
         Some(Commands::Init {

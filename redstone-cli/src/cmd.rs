@@ -459,6 +459,75 @@ pub async fn rm_cmd(profile_name: &str, force: bool) {
     println!("{}", t!("app.cli.rm_success", name = profile_name));
 }
 
+// ─── Rename ───
+
+pub async fn rename_cmd(from: &str, to: &str) {
+    if let Err(e) = redstone_core::profile::validate_profile_name(from) {
+        eprintln!("{}", e);
+        return;
+    }
+    if let Err(e) = redstone_core::profile::validate_profile_name(to) {
+        eprintln!("{}", e);
+        return;
+    }
+
+    let old_yaml = redstone_core::profile::profile_yaml_path(from);
+    if !old_yaml.exists() {
+        eprintln!("{}", t!("app.cli.rename_not_found", name = from));
+        return;
+    }
+
+    let new_yaml = redstone_core::profile::profile_yaml_path(to);
+    if new_yaml.exists() {
+        eprintln!("{}", t!("app.cli.rename_exists", name = to));
+        return;
+    }
+
+    if let Ok(Some(state)) = redstone_core::profile::read_server_state(from) {
+        if state.running {
+            eprintln!("{}", t!("app.cli.rename_running", name = from));
+            return;
+        }
+    }
+
+    let content = match std::fs::read_to_string(&old_yaml) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    let mut profile: redstone_core::profile::Profile = match serde_yaml::from_str(&content) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    profile.name = to.to_string();
+
+    if let Err(e) = std::fs::write(&new_yaml, serde_yaml::to_string(&profile).unwrap()) {
+        eprintln!("{}", e);
+        return;
+    }
+
+    let old_dir = redstone_core::profile::profile_data_dir(from);
+    if old_dir.exists() {
+        let new_dir = redstone_core::profile::profile_data_dir(to);
+        if let Err(e) = std::fs::rename(&old_dir, &new_dir) {
+            let _ = std::fs::remove_file(&new_yaml);
+            eprintln!("{}", e);
+            return;
+        }
+    }
+
+    let _ = std::fs::remove_file(&old_yaml);
+
+    println!("{}", t!("app.cli.rename_ok", old = from, new = to));
+}
+
 // ─── Log ───
 
 pub async fn log_cmd(profile_name: &str, follow: bool) {
