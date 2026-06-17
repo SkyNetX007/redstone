@@ -2,81 +2,115 @@
 app:
     about: "Redstone 管理器"
     cli:
-        start: "✨ 服务器 '%{name}' 已启动"
-        start_desc: "启动 Minecraft 服务器（后台运行）"
-        started_hint_status: "   使用 'redstone status %{name}' 查看状态"
-        started_hint_attach: "   使用 'redstone attach %{name}' 连接控制台"
-        imported: "   已导入配置文件: %{path}"
-        import_error: "❌ 无法导入配置文件: %{error}"
-        stop: "⚙️ [App] 正在向服务器 '%{profile}' 发送 stop..."
-        stop_desc: "安全关闭服务器（发送 stop 指令）"
-        kill: "⚙️ [App] 正在强制关闭服务器 '%{profile}'..."
-        kill_desc: "强制关闭服务器（紧急关闭）"
-        restart_desc: "重启服务器"
-        stopping: "⚙️ [App] 正在停止服务器 '%{profile}'..."
-        status_header: "📊 [App] 服务器: %{profile}"
-        status_pid: "  进程 PID:     %{pid}"
-        status_running: "  运行状态:    %{running}"
-        status_uptime: "  运行时间:    %{uptime}s"
-        status_version: "  游戏版本:    %{version}"
-        status_players: "  在线人数:    %{online}/%{max}"
-        status_motd: "  MOTD:        %{motd}"
-        status_latency: "  网络延迟:    %{latency}ms"
-        status_unreachable: "  SLP ping: 端口 %{port} 无法连接"
-        status_failed: "  Status:     %{error}"
-        status_desc: "查看服务器运行状态"
-        attach_ok: "🔌 [App] 已连接到 '%{profile}'。Ctrl+P+Q 断开连接"
-        attach_raw_mode_err: "❌ [App] 无法启用终端原始模式: %{error}"
-        attach_err: "❌ [App] 控制台连接出错: %{error}"
-        attach_desc: "附加到服务器控制台"
-        server_exited: "🛑 服务器已退出，状态码: %{status}"
-        daemon_err: "❌ 守护进程错误: %{msg}"
-        conn_lost: "❌ 连接已断开: %{error}"
-        connect_error: "❌ [App] 无法连接到服务器 '%{profile}': %{error}"
-        load_error: "❌ [App] 无法加载配置文件 '%{profile}': %{error}"
-        list_desc: "列出所有已注册的服务器"
-        list_none: "暂无已注册的服务器"
-        list_name_header: "名称"
-        list_status_header: "状态"
-        list_info_header: "信息"
-        list_online_label: "🟢 在线"
-        list_offline_label: "⚪ 离线"
-        rm_desc: "删除服务器配置和数据"
-        rm_success: "已删除 '%{name}'"
-        rm_running: "服务器 '%{name}' 正在运行，无法删除（使用 --force 强制删除）"
-        rename_desc: "重命名配置文件"
-        rename_ok: "已将 '%{old}' 重命名为 '%{new}'"
-        rename_exists: "配置文件 '%{name}' 已存在"
-        rename_running: "无法重命名正在运行的服务器 '%{name}'"
-        rename_not_found: "未找到配置文件 '%{name}'"
-        stop_wait: "   正在等待服务器关闭（最长 %{timeout}s）..."
-        stop_timeout: "   服务器在 %{timeout}s 内未关闭，强制结束"
-        stopped: "   服务器 '%{profile}' 已停止"
-        log_desc: "查看服务器日志"
-        log_none: "未找到 '%{profile}' 的日志文件"
-        log_err: "读取日志失败: %{error}"
-        completion_desc: "生成 Shell 补全脚本"
-        init_desc: "创建配置文件模板（minecraft|cmd）"
-        exe_error: "无法获取可执行文件路径: %{error}"
-        log_dir_error: "无法创建日志目录: %{error}"
-        start_error: "守护进程启动失败: %{error}"
-        daemon_load_error: "配置文件加载失败: %{error}"
-        daemon_run_error: "守护进程错误: %{error}"
-        init_created: "配置文件模板已创建: %{path}"
-        init_write_error: "无法写入 %{path}"
-        get_desc: "查看全局配置"
-        set_desc: "设置全局配置"
-        config_empty: "（空配置）"
-        config_parse_error: "无法解析配置: %{error}"
-        config_key_not_found: "未找到键 '%{key}'"
-        config_serialize_error: "无法序列化配置: %{error}"
-        config_write_error: "无法写入配置: %{error}"
-        config_set_ok: "已设置 %{key} = %{value}"
-        config_null_value: "null"
+        action_cancelled: "已取消"
+        connect_err: "无法连接到服务器 '%{profile}': %{error}"
         invalid_profile_name: "无效名称 '%{name}': 仅支持英文、数字、下划线、连字符"
-    desktop:
-        start: "⚙️ [App] 启动桌面应用"
-    tui:
-        start: "⚙️ [App] 启动 TUI"
-    web:
-        start: "⚙️ [App] 启动 WEB"
+        profile_not_found: "未找到配置文件 '%{name}'"
+
+        start:
+            daemon_load_err: "配置文件加载失败: %{error}"
+            daemon_run_err: "守护进程错误: %{error}"
+            desc: "启动 Minecraft 服务器（后台运行）"
+            exe_err: "无法获取可执行文件路径: %{error}"
+            hint_attach: "   使用 'redstone attach %{name}' 连接控制台"
+            hint_status: "   使用 'redstone status %{name}' 查看状态"
+            import_err: "无法导入配置文件: %{error}"
+            imported: "   已导入配置文件: %{path}"
+            load_err: "无法加载配置文件 '%{profile}': %{error}"
+            log_dir_err: "无法创建日志目录: %{error}"
+            ok: "✨ 服务器 '%{name}' 已启动"
+            start_err: "守护进程启动失败: %{error}"
+
+        stop:
+            desc: "安全关闭服务器（发送 stop 指令）"
+            ok: "   服务器 '%{profile}' 已停止"
+            sending: "   正在向服务器 '%{profile}' 发送 stop..."
+            timeout: "   服务器在 %{timeout}s 内未关闭，强制结束"
+            wait: "   正在等待服务器关闭（最长 %{timeout}s）..."
+
+        kill:
+            confirm: "确定强制关闭 '%{name}'？(y/N)"
+            desc: "强制关闭服务器（紧急关闭）"
+            ok: "正在强制关闭服务器 '%{profile}'..."
+
+        restart:
+            desc: "重启服务器"
+            stopping: "正在停止服务器 '%{profile}'..."
+
+        status:
+            desc: "查看服务器运行状态"
+            failed: "  Status:     %{error}"
+            header: "📊 [App] 服务器: %{profile}"
+            latency: "  网络延迟:    %{latency}ms"
+            motd: "  MOTD:        %{motd}"
+            pid: "  进程 PID:     %{pid}"
+            players: "  在线人数:    %{online}/%{max}"
+            running: "  运行状态:    %{running}"
+            unreachable: "  SLP ping: 端口 %{port} 无法连接"
+            uptime: "  运行时间:    %{uptime}s"
+            version: "  游戏版本:    %{version}"
+
+        attach:
+            conn_lost: "连接已断开: %{error}"
+            daemon_err: "守护进程错误: %{msg}"
+            desc: "附加到服务器控制台"
+            err: "控制台连接出错: %{error}"
+            ok: "🔌 [App] 已连接到 '%{profile}'。Ctrl+P+Q 断开连接"
+            raw_mode_err: "无法启用终端原始模式: %{error}"
+            server_exited: "🛑 服务器已退出，状态码: %{status}"
+
+        list:
+            desc: "列出所有已注册的服务器"
+            info_header: "信息"
+            name_header: "名称"
+            none: "暂无已注册的服务器"
+            offline_label: "⚪ 离线"
+            online_label: "🟢 在线"
+            status_header: "状态"
+
+        rm:
+            confirm: "确定删除 '%{name}' 及其所有数据？(y/N)"
+            delete_err: "删除 %{path} 失败: %{error}"
+            desc: "删除服务器配置和数据"
+            ok: "已删除 '%{name}'"
+            running: "服务器 '%{name}' 正在运行，无法删除（使用 --force 强制删除）"
+
+        rename:
+            desc: "重命名配置文件"
+            exists: "配置文件 '%{name}' 已存在"
+            ok: "已将 '%{old}' 重命名为 '%{new}'"
+            running: "无法重命名正在运行的服务器 '%{name}'"
+
+        log:
+            desc: "查看服务器日志"
+            err: "读取日志失败: %{error}"
+            none: "未找到 '%{profile}' 的日志文件"
+
+        completion:
+            desc: "生成 Shell 补全脚本"
+
+        init:
+            desc: "创建配置文件模板（minecraft|cmd）"
+            ok: "配置文件模板已创建: %{path}"
+            write_err: "无法写入 %{path}"
+
+        exec:
+            desc: "向运行中的服务器发送指令"
+            ok: "   指令已发送到 '%{profile}'"
+
+        config:
+            desc: "查看或修改配置"
+            empty: "（空配置）"
+            key_not_found: "未找到键 '%{key}'"
+            null_value: "null"
+            ok: "已设置 %{key} = %{value}"
+            parse_err: "无法解析配置: %{error}"
+            serialize_err: "无法序列化配置: %{error}"
+            write_err: "无法写入配置: %{error}"
+            get:
+                desc: "查看配置值"
+            set:
+                desc: "设置配置值"
+
+        desktop:
+            start: "⚙️ [App] 启动桌面应用"

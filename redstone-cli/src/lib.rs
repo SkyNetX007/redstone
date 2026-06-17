@@ -91,24 +91,42 @@ enum Commands {
         #[arg(short, long, help = "Output path [default: stdout]")]
         output: Option<String>,
     },
-    #[command(about = "Get global config value")]
-    Get {
-        #[arg(help = "Config key (e.g. locale, default_profile)")]
-        key: Option<String>,
-        #[arg(short, long, help = "Show all values")]
-        all: bool,
+    #[command(about = "Execute a command on a running server")]
+    Exec {
+        #[arg(help = "Profile name")]
+        profile: String,
+        #[arg(short = 'c', help = "Command to execute")]
+        command: String,
     },
-    #[command(about = "Set a global config value")]
-    Set {
-        #[arg(help = "Config key (e.g. locale)")]
-        key: String,
-        #[arg(help = "Value to set")]
-        value: String,
+    #[command(about = "View or modify configuration")]
+    Config {
+        #[arg(help = "Profile name (omit for global config)")]
+        profile: Option<String>,
+        #[command(subcommand)]
+        action: ConfigAction,
     },
     #[command(name = "_daemon", hide = true)]
     InternalDaemon {
         #[arg(help = "Path to profile YAML")]
         yaml_path: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum ConfigAction {
+    #[command(about = "Get a config value")]
+    Get {
+        #[arg(help = "Config key (e.g. locale, memory.max)")]
+        key: Option<String>,
+        #[arg(short, long, help = "Show all values")]
+        all: bool,
+    },
+    #[command(about = "Set a config value")]
+    Set {
+        #[arg(help = "Config key (e.g. locale, auto_restart)")]
+        key: String,
+        #[arg(help = "Value to set")]
+        value: String,
     },
 }
 
@@ -132,20 +150,24 @@ pub async fn run_cli() {
     let mut cmd = Cli::command().about(t!("app.about").to_string());
 
     cmd = cmd
-        .mut_subcommand("start", |s| s.about(t!("app.cli.start_desc")))
-        .mut_subcommand("stop", |s| s.about(t!("app.cli.stop_desc")))
-        .mut_subcommand("kill", |s| s.about(t!("app.cli.kill_desc")))
-        .mut_subcommand("restart", |s| s.about(t!("app.cli.restart_desc")))
-        .mut_subcommand("status", |s| s.about(t!("app.cli.status_desc")))
-        .mut_subcommand("attach", |s| s.about(t!("app.cli.attach_desc")))
-        .mut_subcommand("list", |s| s.about(t!("app.cli.list_desc")))
-        .mut_subcommand("rm", |s| s.about(t!("app.cli.rm_desc")))
-        .mut_subcommand("rename", |s| s.about(t!("app.cli.rename_desc")))
-        .mut_subcommand("log", |s| s.about(t!("app.cli.log_desc")))
-        .mut_subcommand("completion", |s| s.about(t!("app.cli.completion_desc")))
-        .mut_subcommand("init", |s| s.about(t!("app.cli.init_desc")))
-        .mut_subcommand("get", |s| s.about(t!("app.cli.get_desc")))
-        .mut_subcommand("set", |s| s.about(t!("app.cli.set_desc")));
+        .mut_subcommand("start", |s| s.about(t!("app.cli.start.desc")))
+        .mut_subcommand("stop", |s| s.about(t!("app.cli.stop.desc")))
+        .mut_subcommand("kill", |s| s.about(t!("app.cli.kill.desc")))
+        .mut_subcommand("restart", |s| s.about(t!("app.cli.restart.desc")))
+        .mut_subcommand("status", |s| s.about(t!("app.cli.status.desc")))
+        .mut_subcommand("attach", |s| s.about(t!("app.cli.attach.desc")))
+        .mut_subcommand("list", |s| s.about(t!("app.cli.list.desc")))
+        .mut_subcommand("rm", |s| s.about(t!("app.cli.rm.desc")))
+        .mut_subcommand("rename", |s| s.about(t!("app.cli.rename.desc")))
+        .mut_subcommand("log", |s| s.about(t!("app.cli.log.desc")))
+        .mut_subcommand("completion", |s| s.about(t!("app.cli.completion.desc")))
+        .mut_subcommand("init", |s| s.about(t!("app.cli.init.desc")))
+        .mut_subcommand("exec", |s| s.about(t!("app.cli.exec.desc")))
+        .mut_subcommand("config", |s| {
+            s.about(t!("app.cli.config.desc"))
+                .mut_subcommand("get", |s| s.about(t!("app.cli.config.get.desc")))
+                .mut_subcommand("set", |s| s.about(t!("app.cli.config.set.desc")))
+        });
 
     let matches = cmd.get_matches();
     let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
@@ -170,8 +192,10 @@ pub async fn run_cli() {
             server_type,
             output,
         }) => cmd::init_cmd(server_type, output),
-        Some(Commands::Get { key, all }) => cmd::get_cmd(key, all),
-        Some(Commands::Set { key, value }) => cmd::set_cmd(&key, &value),
+        Some(Commands::Exec { profile, command }) => cmd::exec_cmd(&profile, &command).await,
+        Some(Commands::Config { profile, action }) => {
+            cmd::config_cmd(profile.as_deref(), action).await
+        }
         Some(Commands::InternalDaemon { yaml_path }) => cmd::_daemon_cmd(&yaml_path).await,
         None => println!("{}", t!("app.desktop.start")),
     }

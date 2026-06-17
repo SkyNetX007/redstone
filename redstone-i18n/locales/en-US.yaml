@@ -2,81 +2,115 @@
 app:
     about: "Redstone Control"
     cli:
-        start: "✨ Server '%{name}' started"
-        start_desc: "Start the Minecraft server (background)"
-        started_hint_status: "   Use 'redstone status %{name}' to check status"
-        started_hint_attach: "   Use 'redstone attach %{name}' for console"
-        imported: "   Profile imported: %{path}"
-        import_error: "❌ Failed to import profile: %{error}"
-        stop: "⚙️ [App] Sending stop to '%{profile}'..."
-        stop_desc: "Gracefully stop the server"
-        kill: "⚙️ [App] Force killing '%{profile}'..."
-        kill_desc: "Force kill the server"
-        restart_desc: "Restart the server"
-        stopping: "⚙️ [App] Stopping '%{profile}'..."
-        status_header: "📊 [App] Server: %{profile}"
-        status_pid: "  PID:        %{pid}"
-        status_running: "  Running:    %{running}"
-        status_uptime: "  Uptime:     %{uptime}s"
-        status_version: "  Version:    %{version}"
-        status_players: "  Players:    %{online}/%{max}"
-        status_motd: "  MOTD:       %{motd}"
-        status_latency: "  Latency:    %{latency}ms"
-        status_unreachable: "  SLP ping: port %{port} unreachable"
-        status_failed: "  Status:     %{error}"
-        status_desc: "Query server status"
-        attach_ok: "🔌 [App] Attached to '%{profile}'. Ctrl+P+Q to detach"
-        attach_raw_mode_err: "❌ [App] Failed to enable raw mode: %{error}"
-        attach_err: "❌ [App] Attach error: %{error}"
-        attach_desc: "Attach to server console"
-        server_exited: "🛑 Server exited with status: %{status}"
-        daemon_err: "❌ Daemon error: %{msg}"
-        conn_lost: "❌ Connection lost: %{error}"
-        connect_error: "❌ [App] Cannot connect to server '%{profile}': %{error}"
-        load_error: "❌ [App] Failed to load profile '%{profile}': %{error}"
-        list_desc: "List all registered servers"
-        list_none: "No registered servers"
-        list_name_header: "Name"
-        list_status_header: "Status"
-        list_info_header: "Info"
-        list_online_label: "🟢 Online"
-        list_offline_label: "⚪ Offline"
-        rm_desc: "Remove a server profile and data"
-        rm_success: "Removed '%{name}'"
-        rm_running: "Server '%{name}' is running. Use --force to remove"
-        rename_desc: "Rename a profile"
-        rename_ok: "Renamed '%{old}' to '%{new}'"
-        rename_exists: "Profile '%{name}' already exists"
-        rename_running: "Cannot rename running server '%{name}'"
-        rename_not_found: "Profile '%{name}' not found"
-        stop_wait: "   Waiting up to %{timeout}s for graceful stop..."
-        stop_timeout: "   Server did not stop within %{timeout}s, forcing kill"
-        stopped: "   Server '%{profile}' stopped"
-        log_desc: "View server log"
-        log_none: "No log file found for '%{profile}'"
-        log_err: "Failed to read log: %{error}"
-        completion_desc: "Generate shell completion script"
-        init_desc: "Create a profile template (minecraft|cmd)"
-        exe_error: "Failed to get executable path: %{error}"
-        log_dir_error: "Failed to create log directory: %{error}"
-        start_error: "Failed to start daemon: %{error}"
-        daemon_load_error: "Failed to load profile: %{error}"
-        daemon_run_error: "Daemon error: %{error}"
-        init_created: "Created profile template at %{path}"
-        init_write_error: "Failed to write to %{path}"
-        get_desc: "Get global config value"
-        set_desc: "Set a global config value"
-        config_empty: "(empty config)"
-        config_parse_error: "Failed to parse config: %{error}"
-        config_key_not_found: "Key '%{key}' not found"
-        config_serialize_error: "Failed to serialize config: %{error}"
-        config_write_error: "Failed to write config: %{error}"
-        config_set_ok: "Set %{key} = %{value}"
-        config_null_value: "null"
+        action_cancelled: "Cancelled"
+        connect_err: "Cannot connect to server '%{profile}': %{error}"
         invalid_profile_name: "Invalid name '%{name}': only letters, numbers, '_', and '-' are allowed"
-    desktop:
-        start: "⚙️ [App] start desktop app"
-    tui:
-        start: "⚙️ [App] start TUI"
-    web:
-        start: "⚙️ [App] start WEB"
+        profile_not_found: "Profile '%{name}' not found"
+
+        start:
+            daemon_load_err: "Failed to load profile: %{error}"
+            daemon_run_err: "Daemon error: %{error}"
+            desc: "Start the Minecraft server (background)"
+            exe_err: "Failed to get executable path: %{error}"
+            hint_attach: "   Use 'redstone attach %{name}' for console"
+            hint_status: "   Use 'redstone status %{name}' to check status"
+            import_err: "Failed to import profile: %{error}"
+            imported: "   Profile imported: %{path}"
+            load_err: "Failed to load profile '%{profile}': %{error}"
+            log_dir_err: "Failed to create log directory: %{error}"
+            ok: "✨ Server '%{name}' started"
+            start_err: "Failed to start daemon: %{error}"
+
+        stop:
+            desc: "Gracefully stop the server"
+            ok: "   Server '%{profile}' stopped"
+            sending: "   Sending stop to '%{profile}'..."
+            timeout: "   Server did not stop within %{timeout}s, forcing kill"
+            wait: "   Waiting up to %{timeout}s for graceful stop..."
+
+        kill:
+            confirm: "Force kill '%{name}'? (y/N)"
+            desc: "Force kill the server"
+            ok: "Force killing '%{profile}'..."
+
+        restart:
+            desc: "Restart the server"
+            stopping: "Stopping '%{profile}'..."
+
+        status:
+            desc: "Query server status"
+            failed: "  Status:     %{error}"
+            header: "📊 [App] Server: %{profile}"
+            latency: "  Latency:    %{latency}ms"
+            motd: "  MOTD:       %{motd}"
+            pid: "  PID:        %{pid}"
+            players: "  Players:    %{online}/%{max}"
+            running: "  Running:    %{running}"
+            unreachable: "  SLP ping: port %{port} unreachable"
+            uptime: "  Uptime:     %{uptime}s"
+            version: "  Version:    %{version}"
+
+        attach:
+            conn_lost: "Connection lost: %{error}"
+            daemon_err: "Daemon error: %{msg}"
+            desc: "Attach to server console"
+            err: "Attach error: %{error}"
+            ok: "🔌 [App] Attached to '%{profile}'. Ctrl+P+Q to detach"
+            raw_mode_err: "Failed to enable raw mode: %{error}"
+            server_exited: "🛑 Server exited with status: %{status}"
+
+        list:
+            desc: "List all registered servers"
+            info_header: "Info"
+            name_header: "Name"
+            none: "No registered servers"
+            offline_label: "⚪ Offline"
+            online_label: "🟢 Online"
+            status_header: "Status"
+
+        rm:
+            confirm: "Remove '%{name}' and all data? (y/N)"
+            delete_err: "Failed to delete %{path}: %{error}"
+            desc: "Remove a server profile and data"
+            ok: "Removed '%{name}'"
+            running: "Server '%{name}' is running. Use --force to remove"
+
+        rename:
+            desc: "Rename a profile"
+            exists: "Profile '%{name}' already exists"
+            ok: "Renamed '%{old}' to '%{new}'"
+            running: "Cannot rename running server '%{name}'"
+
+        log:
+            desc: "View server log"
+            err: "Failed to read log: %{error}"
+            none: "No log file found for '%{profile}'"
+
+        completion:
+            desc: "Generate shell completion script"
+
+        init:
+            desc: "Create a profile template (minecraft|cmd)"
+            ok: "Created profile template at %{path}"
+            write_err: "Failed to write to %{path}"
+
+        exec:
+            desc: "Execute a command on a running server"
+            ok: "   Command sent to '%{profile}'"
+
+        config:
+            desc: "View or modify configuration"
+            empty: "(empty config)"
+            key_not_found: "Key '%{key}' not found"
+            null_value: "null"
+            ok: "Set %{key} = %{value}"
+            parse_err: "Failed to parse config: %{error}"
+            serialize_err: "Failed to serialize config: %{error}"
+            write_err: "Failed to write config: %{error}"
+            get:
+                desc: "Get a config value"
+            set:
+                desc: "Set a config value"
+
+        desktop:
+            start: "⚙️ [App] start desktop app"
