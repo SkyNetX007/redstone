@@ -267,13 +267,13 @@ pub fn list_all_profiles() -> Vec<ProfileEntry> {
     if let Ok(rd) = std::fs::read_dir(dir) {
         for entry in rd.flatten() {
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "yaml") {
-                if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
-                    entries.push(ProfileEntry {
-                        name: name.to_string(),
-                        yaml_path: path,
-                    });
-                }
+            if path.extension().is_some_and(|e| e == "yaml")
+                && let Some(name) = path.file_stem().and_then(|s| s.to_str())
+            {
+                entries.push(ProfileEntry {
+                    name: name.to_string(),
+                    yaml_path: path,
+                });
             }
         }
     }
@@ -282,10 +282,10 @@ pub fn list_all_profiles() -> Vec<ProfileEntry> {
 }
 
 pub fn resolve_profile_name(name_or_path: &str) -> String {
-    if let Ok(path) = find_profile(name_or_path) {
-        if let Ok(profile) = ResolvedProfile::load(&path) {
-            return profile.inner.name;
-        }
+    if let Ok(path) = find_profile(name_or_path)
+        && let Ok(profile) = ResolvedProfile::load(&path)
+    {
+        return profile.inner.name;
     }
     name_or_path.to_string()
 }

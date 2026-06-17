@@ -164,11 +164,11 @@ pub async fn stop_cmd(profile_name: &str, wait: bool, timeout: Option<u64>) {
                 let _ = client.kill().await;
                 break;
             }
-            if let Ok(Some(state)) = redstone_core::profile::read_server_state(&resolved) {
-                if !state.running {
-                    println!("{}", t!("app.cli.stopped", profile = &resolved));
-                    break;
-                }
+            if let Ok(Some(state)) = redstone_core::profile::read_server_state(&resolved)
+                && !state.running
+            {
+                println!("{}", t!("app.cli.stopped", profile = &resolved));
+                break;
             }
             tokio::time::sleep(delay).await;
         }
@@ -211,10 +211,10 @@ pub async fn restart_cmd(profile_name: &str) {
             if start.elapsed().as_secs() > 60 {
                 break;
             }
-            if let Ok(Some(state)) = redstone_core::profile::read_server_state(&resolved) {
-                if !state.running {
-                    break;
-                }
+            if let Ok(Some(state)) = redstone_core::profile::read_server_state(&resolved)
+                && !state.running
+            {
+                break;
             }
             tokio::time::sleep(std::time::Duration::from_millis(250)).await;
         }
@@ -392,7 +392,7 @@ pub async fn list_cmd(online_only: bool, offline_only: bool) {
         let state = redstone_core::profile::read_server_state(&entry.name)
             .ok()
             .flatten();
-        let running = state.as_ref().map_or(false, |s| s.running);
+        let running = state.as_ref().is_some_and(|s| s.running);
 
         if online_only && !running {
             continue;
@@ -435,15 +435,15 @@ pub async fn rm_cmd(profile_name: &str, force: bool) {
         return;
     }
 
-    if let Ok(Some(state)) = redstone_core::profile::read_server_state(profile_name) {
-        if state.running {
-            if !force {
-                eprintln!("{}", t!("app.cli.rm_running", name = profile_name));
-                return;
-            }
-            kill_cmd(profile_name).await;
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    if let Ok(Some(state)) = redstone_core::profile::read_server_state(profile_name)
+        && state.running
+    {
+        if !force {
+            eprintln!("{}", t!("app.cli.rm_running", name = profile_name));
+            return;
         }
+        kill_cmd(profile_name).await;
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
 
     let yaml = redstone_core::profile::profile_yaml_path(profile_name);
@@ -483,11 +483,11 @@ pub async fn rename_cmd(from: &str, to: &str) {
         return;
     }
 
-    if let Ok(Some(state)) = redstone_core::profile::read_server_state(from) {
-        if state.running {
-            eprintln!("{}", t!("app.cli.rename_running", name = from));
-            return;
-        }
+    if let Ok(Some(state)) = redstone_core::profile::read_server_state(from)
+        && state.running
+    {
+        eprintln!("{}", t!("app.cli.rename_running", name = from));
+        return;
     }
 
     let content = match std::fs::read_to_string(&old_yaml) {
@@ -542,13 +542,13 @@ pub async fn log_cmd(profile_name: &str, follow: bool) {
     if follow {
         let mut last_size = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
         loop {
-            if let Ok(current_size) = std::fs::metadata(&log_path).map(|m| m.len()) {
-                if current_size > last_size {
-                    let content = std::fs::read_to_string(&log_path).unwrap_or_default();
-                    print!("{}", &content[last_size as usize..]);
-                    let _ = std::io::stdout().flush();
-                    last_size = current_size;
-                }
+            if let Ok(current_size) = std::fs::metadata(&log_path).map(|m| m.len())
+                && current_size > last_size
+            {
+                let content = std::fs::read_to_string(&log_path).unwrap_or_default();
+                print!("{}", &content[last_size as usize..]);
+                let _ = std::io::stdout().flush();
+                last_size = current_size;
             }
             tokio::time::sleep(std::time::Duration::from_millis(200)).await;
         }

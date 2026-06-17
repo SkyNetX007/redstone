@@ -165,19 +165,16 @@ pub async fn run_daemon(profile: ResolvedProfile) -> Result<(), Box<dyn std::err
                     std::time::Duration::from_secs(1),
                     listener.accept(),
                 ) => {
-                    match conn {
-                        Ok(Ok(conn)) => {
-                            let stdout_rx = stdout_tx.subscribe();
-                            let stderr_rx = stderr_tx.subscribe();
-                            let stdin_clone = stdin_ref.clone();
-                            let start = start_time;
-                            let run = running.clone();
-                            let kill = killed.clone();
-                            tokio::spawn(async move {
-                                handle_client(conn, stdin_clone, stdout_rx, stderr_rx, pid, start, run, kill).await;
-                            });
-                        }
-                        _ => {}
+                    if let Ok(Ok(conn)) = conn {
+                        let stdout_rx = stdout_tx.subscribe();
+                        let stderr_rx = stderr_tx.subscribe();
+                        let stdin_clone = stdin_ref.clone();
+                        let start = start_time;
+                        let run = running.clone();
+                        let kill = killed.clone();
+                        tokio::spawn(async move {
+                            handle_client(conn, stdin_clone, stdout_rx, stderr_rx, pid, start, run, kill).await;
+                        });
                     }
                 }
                 _ = tokio::signal::ctrl_c() => {
