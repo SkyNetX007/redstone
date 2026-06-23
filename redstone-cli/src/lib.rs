@@ -118,8 +118,6 @@ enum ConfigAction {
     Get {
         #[arg(help = "Config key (e.g. locale, memory.max)")]
         key: Option<String>,
-        #[arg(short, long, help = "Show all values")]
-        all: bool,
     },
     #[command(about = "Set a config value")]
     Set {
@@ -150,23 +148,80 @@ pub async fn run_cli() {
     let mut cmd = Cli::command().about(t!("app.about").to_string());
 
     cmd = cmd
-        .mut_subcommand("start", |s| s.about(t!("app.cli.start.desc")))
-        .mut_subcommand("stop", |s| s.about(t!("app.cli.stop.desc")))
-        .mut_subcommand("kill", |s| s.about(t!("app.cli.kill.desc")))
-        .mut_subcommand("restart", |s| s.about(t!("app.cli.restart.desc")))
-        .mut_subcommand("status", |s| s.about(t!("app.cli.status.desc")))
-        .mut_subcommand("attach", |s| s.about(t!("app.cli.attach.desc")))
-        .mut_subcommand("list", |s| s.about(t!("app.cli.list.desc")))
-        .mut_subcommand("rm", |s| s.about(t!("app.cli.rm.desc")))
-        .mut_subcommand("rename", |s| s.about(t!("app.cli.rename.desc")))
-        .mut_subcommand("log", |s| s.about(t!("app.cli.log.desc")))
-        .mut_subcommand("completion", |s| s.about(t!("app.cli.completion.desc")))
-        .mut_subcommand("init", |s| s.about(t!("app.cli.init.desc")))
-        .mut_subcommand("exec", |s| s.about(t!("app.cli.exec.desc")))
+        .mut_subcommand("start", |s| {
+            s.about(t!("app.cli.start.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.start.arg_profile")))
+        })
+        .mut_subcommand("stop", |s| {
+            s.about(t!("app.cli.stop.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+                .mut_arg("wait", |a| a.help(t!("app.cli.stop.arg_wait")))
+                .mut_arg("timeout", |a| a.help(t!("app.cli.stop.arg_timeout")))
+        })
+        .mut_subcommand("kill", |s| {
+            s.about(t!("app.cli.kill.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+        })
+        .mut_subcommand("restart", |s| {
+            s.about(t!("app.cli.restart.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+        })
+        .mut_subcommand("status", |s| {
+            s.about(t!("app.cli.status.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+        })
+        .mut_subcommand("attach", |s| {
+            s.about(t!("app.cli.attach.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+        })
+        .mut_subcommand("list", |s| {
+            s.about(t!("app.cli.list.desc"))
+                .mut_arg("online", |a| a.help(t!("app.cli.list.arg_online")))
+                .mut_arg("offline", |a| a.help(t!("app.cli.list.arg_offline")))
+        })
+        .mut_subcommand("rm", |s| {
+            s.about(t!("app.cli.rm.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+                .mut_arg("force", |a| a.help(t!("app.cli.rm.arg_force")))
+        })
+        .mut_subcommand("rename", |s| {
+            s.about(t!("app.cli.rename.desc"))
+                .mut_arg("from", |a| a.help(t!("app.cli.rename.arg_from")))
+                .mut_arg("to", |a| a.help(t!("app.cli.rename.arg_to")))
+        })
+        .mut_subcommand("log", |s| {
+            s.about(t!("app.cli.log.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+                .mut_arg("follow", |a| a.help(t!("app.cli.log.arg_follow")))
+        })
+        .mut_subcommand("completion", |s| {
+            s.about(t!("app.cli.completion.desc"))
+                .mut_arg("shell", |a| a.help(t!("app.cli.completion.arg_shell")))
+        })
+        .mut_subcommand("init", |s| {
+            s.about(t!("app.cli.init.desc"))
+                .mut_arg("server_type", |a| {
+                    a.help(t!("app.cli.init.arg_server_type"))
+                })
+                .mut_arg("output", |a| a.help(t!("app.cli.init.arg_output")))
+        })
+        .mut_subcommand("exec", |s| {
+            s.about(t!("app.cli.exec.desc"))
+                .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
+                .mut_arg("command", |a| a.help(t!("app.cli.exec.arg_command")))
+        })
         .mut_subcommand("config", |s| {
             s.about(t!("app.cli.config.desc"))
-                .mut_subcommand("get", |s| s.about(t!("app.cli.config.get.desc")))
-                .mut_subcommand("set", |s| s.about(t!("app.cli.config.set.desc")))
+                .mut_arg("profile", |a| a.help(t!("app.cli.config.arg_profile")))
+                .mut_subcommand("get", |s| {
+                    s.about(t!("app.cli.config.get.desc"))
+                        .mut_arg("key", |a| a.help(t!("app.cli.config.get.arg_key")))
+                })
+                .mut_subcommand("set", |s| {
+                    s.about(t!("app.cli.config.set.desc"))
+                        .mut_arg("key", |a| a.help(t!("app.cli.config.set.arg_key")))
+                        .mut_arg("value", |a| a.help(t!("app.cli.config.set.arg_value")))
+                })
         });
 
     let matches = cmd.get_matches();

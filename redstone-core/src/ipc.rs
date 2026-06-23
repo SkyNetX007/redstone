@@ -259,7 +259,7 @@ async fn handle_client(
                             running: running.load(Ordering::Relaxed),
                             uptime_secs: start_time.elapsed().as_secs(),
                         };
-                        let mut json = serde_json::to_string(&resp).unwrap();
+                        let Ok(mut json) = serde_json::to_string(&resp) else { break };
                         json.push('\n');
                         let _ = writer.write_all(json.as_bytes()).await;
                     }
@@ -273,7 +273,7 @@ async fn handle_client(
             r = stdout_rx.recv(), if subscribed => {
                 if let Ok(line) = r {
                     let resp = DaemonResponse::Stdout { data: line };
-                    let mut json = serde_json::to_string(&resp).unwrap();
+                    let Ok(mut json) = serde_json::to_string(&resp) else { break };
                     json.push('\n');
                     if writer.write_all(json.as_bytes()).await.is_err() {
                         break;
@@ -283,7 +283,7 @@ async fn handle_client(
             r = stderr_rx.recv(), if subscribed => {
                 if let Ok(line) = r {
                     let resp = DaemonResponse::Stderr { data: line };
-                    let mut json = serde_json::to_string(&resp).unwrap();
+                    let Ok(mut json) = serde_json::to_string(&resp) else { break };
                     json.push('\n');
                     if writer.write_all(json.as_bytes()).await.is_err() {
                         break;

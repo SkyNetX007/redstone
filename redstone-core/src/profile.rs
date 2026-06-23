@@ -297,7 +297,7 @@ pub fn find_profile(name_or_path: &str) -> Result<PathBuf, String> {
         if p.exists() {
             return Ok(p.to_path_buf());
         }
-        return Err(format!("Profile not found: {}", name_or_path));
+        return Err(format!("Path '{}' not found", name_or_path));
     }
 
     let candidates = vec![
@@ -317,7 +317,7 @@ pub fn find_profile(name_or_path: &str) -> Result<PathBuf, String> {
     }
 
     Err(format!(
-        "Profile '{}' not found in current dir or {}",
+        "profile '{}' not found in {}",
         name_or_path,
         default_profile_dir().display()
     ))

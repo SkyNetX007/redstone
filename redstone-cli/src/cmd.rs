@@ -54,8 +54,8 @@ fn confirm_action(prompt: &str) -> bool {
 pub async fn start_cmd(profile_name: &str) {
     let path = match redstone_core::profile::find_profile(profile_name) {
         Ok(p) => p,
-        Err(e) => {
-            eprintln!("{}", e);
+        Err(_) => {
+            eprintln!("{}", t!("app.cli.profile_not_found", name = profile_name));
             return;
         }
     };
@@ -537,7 +537,14 @@ pub async fn rename_cmd(from: &str, to: &str) {
 
     profile.name = to.to_string();
 
-    if let Err(e) = std::fs::write(&new_yaml, serde_yaml::to_string(&profile).unwrap()) {
+    let yaml = match serde_yaml::to_string(&profile) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+    if let Err(e) = std::fs::write(&new_yaml, yaml) {
         eprintln!("{}", e);
         return;
     }
@@ -635,7 +642,13 @@ pub fn init_cmd(server_type: InitType, output: Option<String>) {
         },
     };
 
-    let yaml = serde_yaml::to_string(&profile).unwrap();
+    let yaml = match serde_yaml::to_string(&profile) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
 
     match output {
         Some(path) => {
@@ -695,12 +708,12 @@ pub async fn config_cmd(profile: Option<&str>, action: ConfigAction) {
     };
 
     match action {
-        ConfigAction::Get { key, all } => config_get(&path, key, all),
+        ConfigAction::Get { key } => config_get(&path, key),
         ConfigAction::Set { key, value } => config_set(&path, &key, &value),
     }
 }
 
-fn config_get(path: &Path, key: Option<String>, _all: bool) {
+fn config_get(path: &Path, key: Option<String>) {
     let content = match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => {
@@ -788,8 +801,9 @@ fn print_yaml_value(value: &serde_yaml::Value) {
         serde_yaml::Value::Bool(b) => println!("{}", b),
         serde_yaml::Value::Null => println!("{}", t!("app.cli.config.null_value")),
         other => {
-            let s = serde_yaml::to_string(other).unwrap();
-            print!("{}", s);
+            if let Ok(s) = serde_yaml::to_string(other) {
+                print!("{}", s);
+            }
         }
     }
 }

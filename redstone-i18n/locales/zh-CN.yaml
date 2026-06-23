@@ -3,11 +3,13 @@ app:
     about: "Redstone 管理器"
     cli:
         action_cancelled: "已取消"
+        arg_profile: "配置文件名称"
         connect_err: "无法连接到服务器 '%{profile}': %{error}"
         invalid_profile_name: "无效名称 '%{name}': 仅支持英文、数字、下划线、连字符"
         profile_not_found: "未找到配置文件 '%{name}'"
 
         start:
+            arg_profile: "配置文件名称或路径"
             daemon_load_err: "配置文件加载失败: %{error}"
             daemon_run_err: "守护进程错误: %{error}"
             desc: "启动 Minecraft 服务器（后台运行）"
@@ -22,6 +24,8 @@ app:
             start_err: "守护进程启动失败: %{error}"
 
         stop:
+            arg_timeout: "等待超时秒数，超时后强制关闭 [默认: 30]"
+            arg_wait: "等待服务器完全停止"
             desc: "安全关闭服务器（发送 stop 指令）"
             ok: "   服务器 '%{profile}' 已停止"
             sending: "   正在向服务器 '%{profile}' 发送 stop..."
@@ -60,6 +64,8 @@ app:
             server_exited: "🛑 服务器已退出，状态码: %{status}"
 
         list:
+            arg_offline: "仅显示离线服务器"
+            arg_online: "仅显示在线服务器"
             desc: "列出所有已注册的服务器"
             info_header: "信息"
             name_header: "名称"
@@ -69,6 +75,7 @@ app:
             status_header: "状态"
 
         rm:
+            arg_force: "强制删除（即使正在运行）"
             confirm: "确定删除 '%{name}' 及其所有数据？(y/N)"
             delete_err: "删除 %{path} 失败: %{error}"
             desc: "删除服务器配置和数据"
@@ -76,29 +83,37 @@ app:
             running: "服务器 '%{name}' 正在运行，无法删除（使用 --force 强制删除）"
 
         rename:
+            arg_from: "当前配置文件名称"
+            arg_to: "新配置文件名称"
             desc: "重命名配置文件"
             exists: "配置文件 '%{name}' 已存在"
             ok: "已将 '%{old}' 重命名为 '%{new}'"
             running: "无法重命名正在运行的服务器 '%{name}'"
 
         log:
+            arg_follow: "持续跟踪新日志"
             desc: "查看服务器日志"
             err: "读取日志失败: %{error}"
             none: "未找到 '%{profile}' 的日志文件"
 
         completion:
+            arg_shell: "Shell 类型"
             desc: "生成 Shell 补全脚本"
 
         init:
+            arg_output: "输出路径 [默认: stdout]"
+            arg_server_type: "服务器类型"
             desc: "创建配置文件模板（minecraft|cmd）"
             ok: "配置文件模板已创建: %{path}"
             write_err: "无法写入 %{path}"
 
         exec:
+            arg_command: "要执行的指令"
             desc: "向运行中的服务器发送指令"
             ok: "   指令已发送到 '%{profile}'"
 
         config:
+            arg_profile: "配置文件名称（省略则为全局配置）"
             desc: "查看或修改配置"
             empty: "（空配置）"
             key_not_found: "未找到键 '%{key}'"
@@ -108,8 +123,11 @@ app:
             serialize_err: "无法序列化配置: %{error}"
             write_err: "无法写入配置: %{error}"
             get:
+                arg_key: "配置键（如 locale、memory.max）"
                 desc: "查看配置值"
             set:
+                arg_key: "配置键（如 locale、auto_restart）"
+                arg_value: "要设置的值"
                 desc: "设置配置值"
 
         desktop:

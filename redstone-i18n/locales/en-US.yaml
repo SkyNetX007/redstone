@@ -3,11 +3,13 @@ app:
     about: "Redstone Control"
     cli:
         action_cancelled: "Cancelled"
+        arg_profile: "Profile name"
         connect_err: "Cannot connect to server '%{profile}': %{error}"
         invalid_profile_name: "Invalid name '%{name}': only letters, numbers, '_', and '-' are allowed"
         profile_not_found: "Profile '%{name}' not found"
 
         start:
+            arg_profile: "Profile name or path"
             daemon_load_err: "Failed to load profile: %{error}"
             daemon_run_err: "Daemon error: %{error}"
             desc: "Start the Minecraft server (background)"
@@ -22,6 +24,8 @@ app:
             start_err: "Failed to start daemon: %{error}"
 
         stop:
+            arg_timeout: "Max seconds to wait before force-kill [default: 30]"
+            arg_wait: "Wait for server to fully stop"
             desc: "Gracefully stop the server"
             ok: "   Server '%{profile}' stopped"
             sending: "   Sending stop to '%{profile}'..."
@@ -60,6 +64,8 @@ app:
             server_exited: "🛑 Server exited with status: %{status}"
 
         list:
+            arg_offline: "Show only offline servers"
+            arg_online: "Show only online servers"
             desc: "List all registered servers"
             info_header: "Info"
             name_header: "Name"
@@ -69,6 +75,7 @@ app:
             status_header: "Status"
 
         rm:
+            arg_force: "Force remove even if running"
             confirm: "Remove '%{name}' and all data? (y/N)"
             delete_err: "Failed to delete %{path}: %{error}"
             desc: "Remove a server profile and data"
@@ -76,29 +83,37 @@ app:
             running: "Server '%{name}' is running. Use --force to remove"
 
         rename:
+            arg_from: "Current profile name"
+            arg_to: "New profile name"
             desc: "Rename a profile"
             exists: "Profile '%{name}' already exists"
             ok: "Renamed '%{old}' to '%{new}'"
             running: "Cannot rename running server '%{name}'"
 
         log:
+            arg_follow: "Follow new log entries"
             desc: "View server log"
             err: "Failed to read log: %{error}"
             none: "No log file found for '%{profile}'"
 
         completion:
+            arg_shell: "Shell type"
             desc: "Generate shell completion script"
 
         init:
+            arg_output: "Output path [default: stdout]"
+            arg_server_type: "Server type"
             desc: "Create a profile template (minecraft|cmd)"
             ok: "Created profile template at %{path}"
             write_err: "Failed to write to %{path}"
 
         exec:
+            arg_command: "Command to execute"
             desc: "Execute a command on a running server"
             ok: "   Command sent to '%{profile}'"
 
         config:
+            arg_profile: "Profile name (omit for global config)"
             desc: "View or modify configuration"
             empty: "(empty config)"
             key_not_found: "Key '%{key}' not found"
@@ -108,8 +123,11 @@ app:
             serialize_err: "Failed to serialize config: %{error}"
             write_err: "Failed to write config: %{error}"
             get:
+                arg_key: "Config key (e.g. locale, memory.max)"
                 desc: "Get a config value"
             set:
+                arg_key: "Config key (e.g. locale, auto_restart)"
+                arg_value: "Value to set"
                 desc: "Set a config value"
 
         desktop:
