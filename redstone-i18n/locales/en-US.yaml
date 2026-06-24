@@ -59,7 +59,7 @@ app:
             daemon_err: "Daemon error: %{msg}"
             desc: "Attach to server console"
             err: "Attach error: %{error}"
-            ok: "🔌 [App] Attached to '%{profile}'. Ctrl+P+Q to detach"
+            ok: "🔌 [App] Attached to '%{profile}'. Ctrl+Q or Ctrl+C to detach"
             raw_mode_err: "Failed to enable raw mode: %{error}"
             server_exited: "🛑 Server exited with status: %{status}"
 

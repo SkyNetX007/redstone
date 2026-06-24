@@ -59,7 +59,7 @@ app:
             daemon_err: "守护进程错误: %{msg}"
             desc: "附加到服务器控制台"
             err: "控制台连接出错: %{error}"
-            ok: "🔌 [App] 已连接到 '%{profile}'。Ctrl+P+Q 断开连接"
+            ok: "🔌 [App] 已连接到 '%{profile}'。Ctrl+Q 或 Ctrl+C 断开连接"
             raw_mode_err: "无法启用终端原始模式: %{error}"
             server_exited: "🛑 服务器已退出，状态码: %{status}"
 

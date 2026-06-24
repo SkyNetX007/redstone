@@ -298,7 +298,8 @@ pub async fn attach_cmd(profile_name: &str) {
     }
 
     let resolved = redstone_core::profile::resolve_profile_name(profile_name);
-    println!("{}", t!("app.cli.attach.ok", profile = &resolved));
+    print!("\r{}\r\n", t!("app.cli.attach.ok", profile = &resolved));
+    let _ = std::io::stdout().flush();
 
     let result = run_attach_loop(&mut client).await;
 
@@ -308,60 +309,212 @@ pub async fn attach_cmd(profile_name: &str) {
     }
 }
 
+struct LineEditor {
+    input: String,
+    cursor: usize,
+    history: Vec<String>,
+    history_pos: Option<usize>,
+    staging: String,
+}
+
+impl LineEditor {
+    fn new() -> Self {
+        Self {
+            input: String::with_capacity(64),
+            cursor: 0,
+            history: Vec::new(),
+            history_pos: None,
+            staging: String::new(),
+        }
+    }
+
+    fn redraw(&self) {
+        use unicode_width::UnicodeWidthStr;
+        print!("\r\x1B[K{}", self.input);
+        let suffix_width = self.input[self.cursor..].width();
+        if suffix_width > 0 {
+            print!("\x1B[{}D", suffix_width);
+        }
+        let _ = std::io::stdout().flush();
+    }
+
+    async fn handle_key(
+        &mut self,
+        key: crossterm::event::KeyEvent,
+        client: &mut redstone_core::ipc::DaemonClient,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
+
+        if key.kind != KeyEventKind::Press {
+            return Ok(false);
+        }
+
+        if key.code == KeyCode::Char('q') && key.modifiers == KeyModifiers::CONTROL {
+            return Ok(true);
+        }
+
+        if key.code == KeyCode::Char('c') && key.modifiers == KeyModifiers::CONTROL {
+            if self.input.is_empty() {
+                return Ok(true);
+            }
+            self.input.clear();
+            self.cursor = 0;
+            self.history_pos = None;
+            self.staging.clear();
+            self.redraw();
+            return Ok(false);
+        }
+
+        match key.code {
+            KeyCode::Enter => {
+                print!("\r\n");
+                if !self.input.is_empty() {
+                    let line = self.input.clone();
+                    self.input.clear();
+                    self.history.push(line.clone());
+                    let mut to_send = line;
+                    to_send.push('\n');
+                    let _ = client.write_stdin(&to_send).await;
+                }
+                self.cursor = 0;
+                self.history_pos = None;
+                self.staging.clear();
+            }
+            KeyCode::Backspace => {
+                if self.cursor > 0 {
+                    let prev = self.input[..self.cursor].chars().next_back().unwrap();
+                    self.input.drain(self.cursor - prev.len_utf8()..self.cursor);
+                    self.cursor -= prev.len_utf8();
+                    self.redraw();
+                }
+            }
+            KeyCode::Delete => {
+                if self.cursor < self.input.len() {
+                    let ch = self.input[self.cursor..].chars().next().unwrap();
+                    self.input.drain(self.cursor..self.cursor + ch.len_utf8());
+                    self.redraw();
+                }
+            }
+            KeyCode::Left => {
+                if self.cursor > 0 {
+                    let prev = self.input[..self.cursor].chars().next_back().unwrap();
+                    self.cursor -= prev.len_utf8();
+                    self.redraw();
+                }
+            }
+            KeyCode::Right => {
+                if self.cursor < self.input.len() {
+                    let next = self.input[self.cursor..].chars().next().unwrap();
+                    self.cursor += next.len_utf8();
+                    self.redraw();
+                }
+            }
+            KeyCode::Home => {
+                self.cursor = 0;
+                self.redraw();
+            }
+            KeyCode::End => {
+                self.cursor = self.input.len();
+                self.redraw();
+            }
+            KeyCode::Up => {
+                if self.history.is_empty() {
+                    return Ok(false);
+                }
+                if self.history_pos.is_none() {
+                    self.staging = self.input.clone();
+                }
+                let pos = self.history_pos.unwrap_or(self.history.len());
+                if pos > 0 {
+                    self.history_pos = Some(pos - 1);
+                    self.input = self.history[pos - 1].clone();
+                    self.cursor = self.input.len();
+                    self.redraw();
+                }
+            }
+            KeyCode::Down => {
+                if let Some(pos) = self.history_pos {
+                    if pos + 1 < self.history.len() {
+                        self.history_pos = Some(pos + 1);
+                        self.input = self.history[pos + 1].clone();
+                    } else {
+                        self.history_pos = None;
+                        self.input = std::mem::take(&mut self.staging);
+                    }
+                    self.cursor = self.input.len();
+                    self.redraw();
+                }
+            }
+            KeyCode::Tab => {
+                self.input.insert(self.cursor, '\t');
+                self.cursor += '\t'.len_utf8();
+                self.redraw();
+            }
+            KeyCode::Char(c) => {
+                self.input.insert(self.cursor, c);
+                self.cursor += c.len_utf8();
+                self.redraw();
+            }
+            _ => {}
+        }
+        Ok(false)
+    }
+}
+
 async fn run_attach_loop(
     client: &mut redstone_core::ipc::DaemonClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use crossterm::event::{self, Event, KeyCode, KeyModifiers};
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Event>();
+    client.subscribe().await?;
+    use crossterm::event::Event;
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<crossterm::event::Event>();
 
     std::thread::spawn(move || {
-        while let Ok(ev) = event::read() {
+        while let Ok(ev) = crossterm::event::read() {
             if tx.send(ev).is_err() {
                 break;
             }
         }
     });
 
+    let mut ed = LineEditor::new();
+
     loop {
         tokio::select! {
-            Some(ev) = rx.recv() => {
-                match ev {
-                    Event::Key(key) => {
-                        if key.code == KeyCode::Char('q') && key.modifiers == KeyModifiers::CONTROL {
+            maybe_ev = rx.recv() => {
+                match maybe_ev {
+                    Some(ev) => {
+                        if let Event::Key(key) = ev
+                            && ed.handle_key(key, client).await?
+                        {
                             break;
                         }
-                        if key.code == KeyCode::Char('c') && key.modifiers == KeyModifiers::CONTROL {
-                            break;
-                        }
-                        let data = match key.code {
-                            KeyCode::Enter => "\n".to_string(),
-                            KeyCode::Backspace => "\x7f".to_string(),
-                            KeyCode::Tab => "\t".to_string(),
-                            KeyCode::Char(c) => c.to_string(),
-                            _ => continue,
-                        };
-                        let _ = client.write_stdin(&data).await;
                     }
-                    _ => break,
+                    None => break,
                 }
             }
             r = client.read_response() => {
                 match r {
                     Ok(resp) => match resp {
-                        redstone_core::ipc::DaemonResponse::Stdout { data } => println!("{}", data),
-                        redstone_core::ipc::DaemonResponse::Stderr { data } => eprintln!("{}", data),
+                        redstone_core::ipc::DaemonResponse::Stdout { data }
+                        | redstone_core::ipc::DaemonResponse::Stderr { data } => {
+                            print!("\r\x1B[K{}\r\n", data);
+                            ed.redraw();
+                        }
                         redstone_core::ipc::DaemonResponse::Exited { status } => {
-                            println!("{}", t!("app.cli.attach.server_exited", status = status));
+                            print!("\r\x1B[K{}\r\n", t!("app.cli.attach.server_exited", status = status));
+                            let _ = std::io::stdout().flush();
                             break;
                         }
                         redstone_core::ipc::DaemonResponse::Error { message } => {
-                            eprintln!("{}", t!("app.cli.attach.daemon_err", msg = message));
+                            print!("\r\x1B[K{}\r\n", t!("app.cli.attach.daemon_err", msg = message));
+                            let _ = std::io::stdout().flush();
                             break;
                         }
                         _ => {}
                     },
                     Err(e) => {
-                        eprintln!("{}", t!("app.cli.attach.conn_lost", error = e.to_string()));
+                        print!("\r\x1B[K{}\r\n", t!("app.cli.attach.conn_lost", error = e.to_string()));
+                        let _ = std::io::stdout().flush();
                         break;
                     }
                 }

@@ -354,6 +354,24 @@ impl DaemonClient {
         Ok(())
     }
 
+    pub async fn subscribe(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let req = DaemonRequest::Subscribe;
+        let mut json = serde_json::to_string(&req)?;
+        json.push('\n');
+        self.writer.write_all(json.as_bytes()).await?;
+        self.writer.flush().await?;
+        Ok(())
+    }
+
+    pub async fn unsubscribe(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let req = DaemonRequest::Unsubscribe;
+        let mut json = serde_json::to_string(&req)?;
+        json.push('\n');
+        self.writer.write_all(json.as_bytes()).await?;
+        self.writer.flush().await?;
+        Ok(())
+    }
+
     pub async fn read_response(&mut self) -> Result<DaemonResponse, Box<dyn std::error::Error>> {
         self.buf.clear();
         self.reader.read_line(&mut self.buf).await?;
