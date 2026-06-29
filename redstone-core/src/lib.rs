@@ -1,5 +1,6 @@
 // redstone-core/src/lib.rs
 pub mod config;
+pub mod editor;
 pub mod ipc;
 pub mod profile;
 pub mod slp;
