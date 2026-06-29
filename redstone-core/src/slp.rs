@@ -2,7 +2,7 @@
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ServerStatus {
     pub version: String,
     pub protocol: i32,

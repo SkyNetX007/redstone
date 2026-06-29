@@ -8,6 +8,14 @@ pub struct RedstoneConfig {
     /// When `None`, auto-detect from system locale.
     #[serde(default)]
     pub locale: Option<String>,
+
+    /// TUI framerate (frames per second). Default: 30.
+    #[serde(default = "default_tui_fps")]
+    pub tui_fps: u32,
+}
+
+fn default_tui_fps() -> u32 {
+    30
 }
 
 impl RedstoneConfig {
@@ -18,7 +26,10 @@ impl RedstoneConfig {
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
         let p = Self::path();
         if !p.exists() {
-            return Ok(Self { locale: None });
+            return Ok(Self {
+                locale: None,
+                tui_fps: default_tui_fps(),
+            });
         }
         let content = std::fs::read_to_string(&p)?;
         let cfg: Self = serde_yaml::from_str(&content)?;
