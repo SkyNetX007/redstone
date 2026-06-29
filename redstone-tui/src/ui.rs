@@ -235,7 +235,18 @@ fn draw_status_panel(f: &mut Frame, area: Rect, state: &State) {
         };
         let buttons_line = Line::from(buttons);
 
-        format!("{}\n{}", info, buttons_line)
+        let slp_extra = state
+            .slp_cache
+            .get(&p.name)
+            .map(|slp| {
+                format!(
+                    "\n Players: {}/{}\n Latency: {}ms\n Version: {}",
+                    slp.online_players, slp.max_players, slp.latency_ms, slp.version
+                )
+            })
+            .unwrap_or_default();
+
+        format!("{}\n{}{}", info, buttons_line, slp_extra)
     } else {
         t!("app.tui.status.no_selection").to_string()
     };

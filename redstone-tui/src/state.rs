@@ -106,6 +106,7 @@ pub struct State {
     pub should_quit: bool,
     pub rects: LayoutRects,
     pub mouse_capture: bool,
+    pub slp_cache: HashMap<String, redstone_core::slp::ServerStatus>,
     daemon_clients: HashMap<String, redstone_core::ipc::DaemonClient>,
     pending_starts: HashMap<String, Instant>,
     tx: mpsc::Sender<Event>,
@@ -181,6 +182,7 @@ impl State {
                 console: Rect::default(),
                 status_panel: Rect::default(),
             },
+            slp_cache: HashMap::new(),
             daemon_clients: HashMap::new(),
             pending_starts: HashMap::new(),
             mouse_capture: true,
@@ -259,6 +261,31 @@ impl State {
             self.selected = self.profiles.len() - 1;
         }
 
+        // Spawn SLP pings for running profiles
+        let tx = self.tx.clone();
+        for p in &self.profiles {
+            if p.status != ConnectionStatus::Running {
+                continue;
+            }
+            let name = p.name.clone();
+            let tx = tx.clone();
+            tokio::spawn(async move {
+                let port = redstone_core::profile::read_server_state(&name)
+                    .ok()
+                    .flatten()
+                    .map(|s| s.port)
+                    .unwrap_or(25565);
+                let result = redstone_core::slp::ping_server("127.0.0.1", port)
+                    .await
+                    .map_err(|e| e.to_string());
+                let _ = tx
+                    .send(Event::SlpResult {
+                        profile: name,
+                        result,
+                    })
+                    .await;
+            });
+        }
     }
 
     pub fn selected_profile(&self) -> Option<&ProfileState> {
@@ -269,6 +296,20 @@ impl State {
         self.pending_starts.remove(name);
     }
 
+    pub fn slp_result(
+        &mut self,
+        profile: &str,
+        result: Result<redstone_core::slp::ServerStatus, String>,
+    ) {
+        match result {
+            Ok(status) => {
+                self.slp_cache.insert(profile.to_string(), status);
+            }
+            Err(_) => {
+                self.slp_cache.remove(profile);
+            }
+        }
+    }
 
     pub fn spawn_daemon_tasks(&mut self) {
         for i in 0..self.profiles.len() {
@@ -395,6 +436,7 @@ impl State {
     }
 
     pub async fn stop_server(&mut self, name: &str) {
+        self.slp_cache.remove(name);
         if let Some(pos) = self.profiles.iter().position(|p| p.name == name) {
             self.profiles[pos].status = ConnectionStatus::Offline;
         }
@@ -412,6 +454,7 @@ impl State {
     }
 
     pub async fn kill_server(&mut self, name: &str) {
+        self.slp_cache.remove(name);
         match redstone_core::daemon::kill_server(name).await {
             Ok(_) => {
                 if let Some(pos) = self.profiles.iter().position(|p| p.name == name) {

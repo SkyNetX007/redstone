@@ -231,6 +231,37 @@ async fn run_app(
                         }
                     }
                     Focus::Console => {
+                        // Scroll keys (don't affect input buffer)
+                        let scroll_name = state.selected_profile().map(|p| p.name.clone());
+                        if let Some(ref name) = scroll_name {
+                            match key.code {
+                                KeyCode::PageUp => {
+                                    if let Some(buf) = state.console_buffers.get_mut(name) {
+                                        buf.scroll_up();
+                                    }
+                                    continue;
+                                }
+                                KeyCode::PageDown => {
+                                    if let Some(buf) = state.console_buffers.get_mut(name) {
+                                        buf.scroll_down();
+                                    }
+                                    continue;
+                                }
+                                KeyCode::Home => {
+                                    if let Some(buf) = state.console_buffers.get_mut(name) {
+                                        buf.scroll_top();
+                                    }
+                                    continue;
+                                }
+                                KeyCode::End => {
+                                    if let Some(buf) = state.console_buffers.get_mut(name) {
+                                        buf.scroll_bottom();
+                                    }
+                                    continue;
+                                }
+                                _ => {}
+                            }
+                        }
                         let action = state.input.handle_key(key);
                         match action {
                             redstone_core::editor::InputAction::Quit => {
@@ -291,6 +322,9 @@ async fn run_app(
             }
             Event::DaemonConnected { profile } => {
                 state.daemon_connected(&profile);
+            }
+            Event::SlpResult { profile, result } => {
+                state.slp_result(&profile, result);
             }
             Event::StartServer { profile } => {
                 state.start_server(&profile).await;
