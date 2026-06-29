@@ -84,7 +84,7 @@ impl ResolvedProfile {
         let resolved = if p.is_absolute() {
             p.to_path_buf()
         } else {
-            self.base_dir.join(p)
+            self.server_dir().join(p)
         };
         std::fs::canonicalize(&resolved).unwrap_or(resolved)
     }
