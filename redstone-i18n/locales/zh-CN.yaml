@@ -22,6 +22,8 @@ app:
             log_dir_err: "无法创建日志目录: %{error}"
             ok: "✨ 服务器 '%{name}' 已启动"
             start_err: "守护进程启动失败: %{error}"
+            daemon_died: "守护进程异常退出 (状态码 %{code}): %{error}"
+            already_running: "服务器 '%{name}' 已在运行中"
 
         stop:
             arg_timeout: "等待超时秒数，超时后强制关闭 [默认: 30]"

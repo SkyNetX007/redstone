@@ -22,6 +22,8 @@ app:
             log_dir_err: "Failed to create log directory: %{error}"
             ok: "✨ Server '%{name}' started"
             start_err: "Failed to start daemon: %{error}"
+            daemon_died: "Daemon exited unexpectedly (status %{code}): %{error}"
+            already_running: "Server '%{name}' is already running"
 
         stop:
             arg_timeout: "Max seconds to wait before force-kill [default: 30]"
