@@ -17,6 +17,3 @@ redstone-core = { path = "../redstone-core" }
 rust-i18n.workspace = true
 tokio.workspace = true
 unicode-width.workspace = true
-
-[target.'cfg(unix)'.dependencies]
-libc.workspace = true

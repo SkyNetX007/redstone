@@ -2,42 +2,8 @@
 use crate::{Cli, ConfigAction, InitType, Shell};
 use clap::CommandFactory;
 use rust_i18n::t;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
-
-// ─── spawn_background ───
-
-fn spawn_background(exe: &Path, yaml_path: &str) -> Result<std::process::Child, std::io::Error> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        let mut cmd = std::process::Command::new(exe);
-        cmd.arg("_daemon")
-            .arg(yaml_path)
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null());
-        unsafe {
-            cmd.pre_exec(|| {
-                libc::setsid();
-                Ok(())
-            });
-        }
-        cmd.spawn()
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        std::process::Command::new(exe)
-            .arg("_daemon")
-            .arg(yaml_path)
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .creation_flags(0x08000000)
-            .spawn()
-    }
-}
 
 // ─── Helpers ───
 
@@ -116,16 +82,39 @@ pub async fn start_cmd(profile_name: &str) {
 
     let daemon_path = canonical_yaml.to_string_lossy().into_owned();
 
-    match spawn_background(&exe, &daemon_path) {
-        Ok(_) => {
-            println!("{}", t!("app.cli.start.ok", name = name));
-            println!("{}", t!("app.cli.start.hint_status", name = name));
-            println!("{}", t!("app.cli.start.hint_attach", name = name));
-        }
+    if redstone_core::daemon::check_daemon_alive(name).await {
+        eprintln!("{}", t!("app.cli.start.already_running", name = name));
+        return;
+    }
+
+    let (mut child, stderr) = match redstone_core::daemon::spawn_daemon(&exe, &daemon_path) {
+        Ok(pair) => pair,
         Err(e) => {
             eprintln!("{}", t!("app.cli.start.start_err", error = e.to_string()));
+            return;
         }
+    };
+
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    if let Ok(Some(status)) = child.try_wait() {
+        let mut err_buf = String::new();
+        let mut stderr = stderr;
+        let _ = stderr.read_to_string(&mut err_buf);
+        eprintln!(
+            "{}",
+            t!(
+                "app.cli.start.daemon_died",
+                code = status.to_string(),
+                error = err_buf.trim()
+            )
+        );
+        return;
     }
+
+    println!("{}", t!("app.cli.start.ok", name = name));
+    println!("{}", t!("app.cli.start.hint_status", name = name));
+    println!("{}", t!("app.cli.start.hint_attach", name = name));
 }
 
 // ─── Stop ───
@@ -175,27 +164,18 @@ pub async fn stop_cmd(profile_name: &str, wait: bool, timeout: Option<u64>) {
 // ─── Kill ───
 
 pub async fn kill_cmd(profile_name: &str) {
-    let mut client = match redstone_core::ipc::DaemonClient::connect(profile_name).await {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!(
-                "{}",
-                t!(
-                    "app.cli.connect_err",
-                    profile = profile_name,
-                    error = e.to_string()
-                )
-            );
-            return;
-        }
-    };
     let resolved = redstone_core::profile::resolve_profile_name(profile_name);
     if !confirm_action(&t!("app.cli.kill.confirm", name = &resolved)) {
         println!("{}", t!("app.cli.action_cancelled"));
         return;
     }
     println!("{}", t!("app.cli.kill.ok", profile = &resolved));
-    let _ = client.kill().await;
+    match redstone_core::daemon::kill_server(&resolved).await {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("{}", e);
+        }
+    }
 }
 
 // ─── Restart ───
@@ -310,28 +290,20 @@ pub async fn attach_cmd(profile_name: &str) {
 }
 
 struct LineEditor {
-    input: String,
-    cursor: usize,
-    history: Vec<String>,
-    history_pos: Option<usize>,
-    staging: String,
+    state: redstone_core::editor::InputState,
 }
 
 impl LineEditor {
     fn new() -> Self {
         Self {
-            input: String::with_capacity(64),
-            cursor: 0,
-            history: Vec::new(),
-            history_pos: None,
-            staging: String::new(),
+            state: redstone_core::editor::InputState::new(),
         }
     }
 
     fn redraw(&self) {
         use unicode_width::UnicodeWidthStr;
-        print!("\r\x1B[K{}", self.input);
-        let suffix_width = self.input[self.cursor..].width();
+        print!("\r\x1B[K{}", self.state.input);
+        let suffix_width = self.state.input[self.state.cursor..].width();
         if suffix_width > 0 {
             print!("\x1B[{}D", suffix_width);
         }
@@ -343,120 +315,20 @@ impl LineEditor {
         key: crossterm::event::KeyEvent,
         client: &mut redstone_core::ipc::DaemonClient,
     ) -> Result<bool, Box<dyn std::error::Error>> {
-        use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
-
-        if key.kind != KeyEventKind::Press {
-            return Ok(false);
-        }
-
-        if key.code == KeyCode::Char('q') && key.modifiers == KeyModifiers::CONTROL {
-            return Ok(true);
-        }
-
-        if key.code == KeyCode::Char('c') && key.modifiers == KeyModifiers::CONTROL {
-            if self.input.is_empty() {
-                return Ok(true);
+        match self.state.handle_key(key) {
+            redstone_core::editor::InputAction::Quit => return Ok(true),
+            redstone_core::editor::InputAction::Clear => {
+                self.redraw();
             }
-            self.input.clear();
-            self.cursor = 0;
-            self.history_pos = None;
-            self.staging.clear();
-            self.redraw();
-            return Ok(false);
-        }
-
-        match key.code {
-            KeyCode::Enter => {
+            redstone_core::editor::InputAction::Submit(line) => {
                 print!("\r\n");
-                if !self.input.is_empty() {
-                    let line = self.input.clone();
-                    self.input.clear();
-                    self.history.push(line.clone());
-                    let mut to_send = line;
-                    to_send.push('\n');
-                    let _ = client.write_stdin(&to_send).await;
-                }
-                self.cursor = 0;
-                self.history_pos = None;
-                self.staging.clear();
+                let mut to_send = line;
+                to_send.push('\n');
+                let _ = client.write_stdin(&to_send).await;
             }
-            KeyCode::Backspace => {
-                if self.cursor > 0 {
-                    let prev = self.input[..self.cursor].chars().next_back().unwrap();
-                    self.input.drain(self.cursor - prev.len_utf8()..self.cursor);
-                    self.cursor -= prev.len_utf8();
-                    self.redraw();
-                }
-            }
-            KeyCode::Delete => {
-                if self.cursor < self.input.len() {
-                    let ch = self.input[self.cursor..].chars().next().unwrap();
-                    self.input.drain(self.cursor..self.cursor + ch.len_utf8());
-                    self.redraw();
-                }
-            }
-            KeyCode::Left => {
-                if self.cursor > 0 {
-                    let prev = self.input[..self.cursor].chars().next_back().unwrap();
-                    self.cursor -= prev.len_utf8();
-                    self.redraw();
-                }
-            }
-            KeyCode::Right => {
-                if self.cursor < self.input.len() {
-                    let next = self.input[self.cursor..].chars().next().unwrap();
-                    self.cursor += next.len_utf8();
-                    self.redraw();
-                }
-            }
-            KeyCode::Home => {
-                self.cursor = 0;
-                self.redraw();
-            }
-            KeyCode::End => {
-                self.cursor = self.input.len();
-                self.redraw();
-            }
-            KeyCode::Up => {
-                if self.history.is_empty() {
-                    return Ok(false);
-                }
-                if self.history_pos.is_none() {
-                    self.staging = self.input.clone();
-                }
-                let pos = self.history_pos.unwrap_or(self.history.len());
-                if pos > 0 {
-                    self.history_pos = Some(pos - 1);
-                    self.input = self.history[pos - 1].clone();
-                    self.cursor = self.input.len();
-                    self.redraw();
-                }
-            }
-            KeyCode::Down => {
-                if let Some(pos) = self.history_pos {
-                    if pos + 1 < self.history.len() {
-                        self.history_pos = Some(pos + 1);
-                        self.input = self.history[pos + 1].clone();
-                    } else {
-                        self.history_pos = None;
-                        self.input = std::mem::take(&mut self.staging);
-                    }
-                    self.cursor = self.input.len();
-                    self.redraw();
-                }
-            }
-            KeyCode::Tab => {
-                self.input.insert(self.cursor, '\t');
-                self.cursor += '\t'.len_utf8();
-                self.redraw();
-            }
-            KeyCode::Char(c) => {
-                self.input.insert(self.cursor, c);
-                self.cursor += c.len_utf8();
-                self.redraw();
-            }
-            _ => {}
+            redstone_core::editor::InputAction::None => {}
         }
+        self.redraw();
         Ok(false)
     }
 }
@@ -982,6 +854,14 @@ fn set_nested(value: &mut serde_yaml::Value, key: &str, val: serde_yaml::Value) 
         set_nested(&mut value[parent], child, val);
     } else {
         value[key] = val;
+    }
+}
+
+// ─── TUI ───
+
+pub async fn tui_cmd() {
+    if let Err(e) = redstone_tui::run().await {
+        eprintln!("TUI error: {}", e);
     }
 }
 
