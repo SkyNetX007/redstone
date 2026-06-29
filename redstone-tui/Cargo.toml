@@ -1,5 +1,5 @@
 [package]
-name = "redstone-cli"
+name = "redstone-tui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,13 +8,10 @@ description.workspace = true
 repository.workspace = true
 
 [dependencies]
-clap.workspace = true
-clap_complete.workspace = true
 crossterm.workspace = true
-serde_yaml.workspace = true
-interprocess.workspace = true
+ratatui.workspace = true
 redstone-core = { path = "../redstone-core" }
-redstone-tui = { path = "../redstone-tui" }
 rust-i18n.workspace = true
+strip-ansi-escapes.workspace = true
 tokio.workspace = true
 unicode-width.workspace = true

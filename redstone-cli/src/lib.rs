@@ -51,6 +51,8 @@ enum Commands {
         #[arg(help = "Profile name")]
         profile: String,
     },
+    #[command(about = "Terminal user interface dashboard")]
+    Tui,
     #[command(about = "List all registered servers")]
     List {
         #[arg(long, help = "Show only online servers")]
@@ -174,6 +176,7 @@ pub async fn run_cli() {
             s.about(t!("app.cli.attach.desc"))
                 .mut_arg("profile", |a| a.help(t!("app.cli.arg_profile")))
         })
+        .mut_subcommand("tui", |s| s.about(t!("app.cli.tui.desc")))
         .mut_subcommand("list", |s| {
             s.about(t!("app.cli.list.desc"))
                 .mut_arg("online", |a| a.help(t!("app.cli.list.arg_online")))
@@ -251,6 +254,7 @@ pub async fn run_cli() {
         Some(Commands::Config { profile, action }) => {
             cmd::config_cmd(profile.as_deref(), action).await
         }
+        Some(Commands::Tui) => cmd::tui_cmd().await,
         Some(Commands::InternalDaemon { yaml_path }) => cmd::_daemon_cmd(&yaml_path).await,
         None => println!("{}", t!("app.desktop.start")),
     }

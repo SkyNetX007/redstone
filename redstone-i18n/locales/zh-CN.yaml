@@ -1,5 +1,30 @@
 # locales/zh-CN.yaml
 app:
+    tui:
+        header:
+            online_total: "%{online} 在线 / %{total} 总计"
+            help: "Tab: 切换焦点 | ↑↓: 导航 | Enter: 发送 | Ctrl+Q: 退出"
+        server_list:
+            title_focused: "◎ 服务器列表 "
+            title: "  服务器列表 "
+            empty: " 没有找到配置文件。\n 使用 `redstone init`\n 或 `redstone start` 创建。"
+        console:
+            title_focused: "◎ 控制台 "
+            title: "  控制台 "
+            input_prompt: "> "
+            log_title: "日志"
+        status:
+            title: " 服务器信息 "
+            no_selection: " 未选择服务器 "
+            running: " 名称: %{name}\n PID: %{pid}\n 状态: 🟢 运行中\n 运行时间: %{uptime}"
+            offline: " 名称: %{name}\n 状态: ⚪ 离线\n 运行时间: -"
+            btn_start: "[S] 启动"
+            btn_stop: "[t] 停止"
+            btn_kill: "[k] 强制关闭"
+            btn_restart: "[r] 重启"
+        overlay:
+            title: " 确认 "
+
     about: "Redstone 管理器"
     cli:
         action_cancelled: "已取消"
@@ -55,6 +80,9 @@ app:
             unreachable: "  SLP ping: 端口 %{port} 无法连接"
             uptime: "  运行时间:    %{uptime}s"
             version: "  游戏版本:    %{version}"
+
+        tui:
+            desc: "终端用户界面仪表盘"
 
         attach:
             conn_lost: "连接已断开: %{error}"

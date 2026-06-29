@@ -1,5 +1,30 @@
 # locales/en-US.yaml
 app:
+    tui:
+        header:
+            online_total: "%{online} online / %{total} total"
+            help: "Tab: focus | ↑↓: navigate | Enter: send | Ctrl+Q: quit"
+        server_list:
+            title_focused: "◎ Servers "
+            title: "  Servers "
+            empty: " No profiles found.\n Use `redstone init`\n or `redstone start`."
+        console:
+            title_focused: "◎ Console "
+            title: "  Console "
+            input_prompt: "> "
+            log_title: "Log"
+        status:
+            title: " Server Info "
+            no_selection: " No server selected "
+            running: " Name: %{name}\n PID: %{pid}\n Status: 🟢 Running\n Uptime: %{uptime}"
+            offline: " Name: %{name}\n Status: ⚪ Offline\n Uptime: -"
+            btn_start: "[S] Start"
+            btn_stop: "[t] Stop"
+            btn_kill: "[k] Kill"
+            btn_restart: "[r] Restart"
+        overlay:
+            title: " Confirm "
+
     about: "Redstone Control"
     cli:
         action_cancelled: "Cancelled"
@@ -55,6 +80,9 @@ app:
             unreachable: "  SLP ping: port %{port} unreachable"
             uptime: "  Uptime:     %{uptime}s"
             version: "  Version:    %{version}"
+
+        tui:
+            desc: "Terminal user interface dashboard"
 
         attach:
             conn_lost: "Connection lost: %{error}"
